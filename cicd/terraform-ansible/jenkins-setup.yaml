@@ -1,0 +1,122 @@
+---
+- name: Provision setup
+  hosts: main_jenkins_node
+  become: true
+
+  tasks:
+  - name: Installing Jenkins.
+    block:
+    - name: Adding Jenkins gpg keys.
+      get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+        mode: 0644
+        force: true
+
+    - name: Adding Jenkins repository.
+      apt_repository:
+        repo: deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/
+        filename: jenkins
+        update_cache: true
+        state: present
+
+    - name: Installing Java 11.
+      apt:
+        name: openjdk-11-jre
+        state: present
+
+    - name: Installing Jenkins.
+      apt:
+        name: jenkins
+        state: present
+
+
+  - name: Installing Docker.
+    block:
+    - name: Adding Docker gpg keys.
+      shell: |
+        mkdir -p /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+    - name: Adding Docker repository
+      apt_repository:
+        repo: deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian {{ ansible_facts['distribution_release'] }} stable
+        filename: docker
+        update_cache: true
+        state: present
+
+    - name: Installing Docker.
+      apt:
+        pkg:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        state: present
+        update_cache: true
+
+    - name: Adding Jnenkins to docker group.
+      user:
+        name: jenkins
+        groups: docker
+        append: yes
+
+
+  - name: Configuring Docker.
+    block:
+    - name: Creating override dir.
+      file:
+        path: /etc/systemd/system/docker.service.d/
+        state: directory
+
+    - name: Exposing Docker on localhost.
+      shell: |
+        echo    "[Service]"                                                  >  /etc/systemd/system/docker.service.d/override.conf
+        echo    "ExecStart="                                                 >> /etc/systemd/system/docker.service.d/override.conf
+        echo -n "ExecStart=/usr/bin/dockerd -H {{ docker_listen_address }} " >> /etc/systemd/system/docker.service.d/override.conf
+        echo -n "-H fd:// --containerd=/run/containerd/containerd.sock"      >> /etc/systemd/system/docker.service.d/override.conf
+
+    - name: Restarting service.
+      systemd:
+        name: docker.service
+        state: restarted
+        daemon-reload: true
+
+
+  - name: Obtaining ssl sertificate.
+    block:
+    - name: Installing certbot.
+      apt:
+        name: python3-certbot
+        state: present
+
+    - name: Obtaining ssl certificate.
+      shell: |
+        certbot certonly --standalone --non-interactive --register-unsafely-without-email --agree-tos --preferred-challenges http --domains {{ jenkins_domain }}
+
+    - name: Converting ssl to pkcs12.
+      shell: |
+        openssl pkcs12 -export -out ./{{ jenkins_pkcs12 }} -passout 'pass:{{ jenkins_keystore_password }}' -inkey /etc/letsencrypt/live/{{ jenkins_domain }}/privkey.pem -in /etc/letsencrypt/live/{{ jenkins_domain }}/fullchain.pem
+
+    - name: Converting pkcs12 to jks.
+      shell: |
+        keytool -importkeystore -srckeystore ./{{ jenkins_pkcs12 }} -srcstorepass '{{ jenkins_keystore_password }}' -srcstoretype PKCS12 -deststoretype JKS -destkeystore {{ jenkins_jks }} -deststorepass '{{ jenkins_keystore_password }}'
+
+    - name: Overriding jenkins.service unit.
+      shell: |
+        mkdir -p /etc/systemd/system/jenkins.service.d
+        echo "[Service]"                                                                        >  /etc/systemd/system/jenkins.service.d/override.conf
+        echo "Environment=\"JENKINS_PORT=-1\""                                                  >> /etc/systemd/system/jenkins.service.d/override.conf
+        echo "Environment=\"JENKINS_HTTPS_PORT={{ jenkins_https_port }}\""                      >> /etc/systemd/system/jenkins.service.d/override.conf
+        echo "Environment=\"JENKINS_HTTPS_KEYSTORE={{ jenkins_jks }}\""                         >> /etc/systemd/system/jenkins.service.d/override.conf
+        echo "Environment=\"JENKINS_HTTPS_KEYSTORE_PASSWORD={{ jenkins_keystore_password }}\""  >> /etc/systemd/system/jenkins.service.d/override.conf
+
+    - name: Restarting service.
+      systemd:
+        name: jenkins.service
+        state: restarted
+        daemon-reload: true
+
+    - name: Retrieving keys.
+      fetch:
+        src: /var/lib/jenkins/secrets/initialAdminPassword
+        dest: ./password_{{ jenkins_domain }}

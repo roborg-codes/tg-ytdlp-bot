@@ -1,0 +1,27 @@
+pipeline {
+    agent any
+    environment {
+        MANIFEST = 'cicd/deployment.yaml'
+        PROJECT_ID = 'cicd-tg-ytdlp-bot'
+        CLUSTER_NAME = 'tg-ytdlp-bot-cluster'
+        LOCATION = 'europe-west1-d'
+        CREDENTIALS_ID = 'cicd-tg-ytdlp-bot'
+    }
+    stages {
+        stage('Deploy to GKE') {
+            steps {
+                step(
+                    [
+                        $class: 'KubernetesEngineBuilder',
+                        projectId: env.PROJECT_ID,
+                        clusterName: env.CLUSTER_NAME,
+                        location: env.LOCATION,
+                        manifestPattern: env.MANIFEST,
+                        credentialsId: env.CREDENTIALS_ID,
+                        verifyDeployments: true
+                    ]
+                )
+            }
+        }
+    }
+}

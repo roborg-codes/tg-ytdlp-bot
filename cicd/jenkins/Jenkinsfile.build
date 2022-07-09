@@ -1,0 +1,40 @@
+pipeline {
+    agent any
+    environment {
+        REGISTRY = "roborgcodes/tg-ytdlp-bot"
+        TAG = "latest"
+        REGISTRY_CREDENTIALS = "dockerhub"
+    }
+    stages {
+        stage('Build') {
+            steps {
+                echo "+++BEGIN BUILD+++"
+                script {
+                    docker_image = docker.build REGISTRY + ":$TAG"
+                }
+                echo "+++END OF BUILD+++"
+            }
+        }
+        stage('Publish') {
+            steps {
+                echo "+++BEGIN PUBLISH+++"
+                script {
+                    docker.withRegistry('', REGISTRY_CREDENTIALS) {
+                        docker_image.push()
+                    }
+                }
+                echo "+++END OF PUBLISH+++"
+            }
+        }
+        stage('Cleanup') {
+            steps {
+                echo "+++BEGIN CLEANUP+++"
+                sh '''
+                    docker rmi "$REGISTRY":"$TAG"
+                    docker system prune -a -f
+                '''
+                echo "+++END OF CLEANUP+++"
+            }
+        }
+    }
+}

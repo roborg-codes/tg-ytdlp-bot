@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+    environment {
+        HOME = "${env.WORKSPACE}"
+    }
+    stages {
+        stage('Lint') {
+            environment {
+                FAIL_THRESHOLD = "5.0"
+                THREAD_N = 4
+                FMT = "colorized"
+                GENERATE_REPORT = "y"
+            }
+            steps {
+                echo "+++BEGIN LINT+++"
+                sh '''
+                    pylint \
+                        --fail-under="${FAIL_THRESHOLD}" \
+                        --jobs="${THREAD_N}" \
+                        --output-format="${FMT}" \
+                        --reports="${GENERATE_REPORT}" \
+                        *.py
+                '''
+                echo "+++END OF LINT+++"
+            }
+        }
+        stage('Test') {
+            steps {
+                echo "+++BEGIN TEST+++"
+                sh '''
+                    python3 ./test.py
+                '''
+                echo "+++END OF TEST+++"
+            }
+        }
+    }
+}

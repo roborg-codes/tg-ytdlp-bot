@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tg-ytdlp-bot-deployment
+  labels:
+    app: tg-ytdlp-bot
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tg-ytdlp-bot
+  template:
+    metadata:
+      labels:
+        app: tg-ytdlp-bot
+    spec:
+      containers:
+      - name: tg-ytdlp-bot
+        image: roborgcodes/tg-ytdlp-bot:latest
+        env:
+        - name: AUTHORIZED_USER
+          valueFrom:
+            secretKeyRef:
+              name: tg-ytdlp-bot-secret
+              key: AUTHORIZED_USER
+        - name: BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: tg-ytdlp-bot-secret
+              key: BOT_TOKEN

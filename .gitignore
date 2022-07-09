@@ -1,0 +1,11 @@
+__pycache__
+.env
+requirements.in
+venv/**
+cicd/*/*.tfstate*
+cicd/*/.terraform*
+cicd/*/terraform-key.json
+cicd/*/hosts.txt
+cicd/*/main-node.ssh.key
+cicd/*/main-node.ssh.key.pub
+cicd/*/password_jenkins-tf.rrops.pp.ua/
