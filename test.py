@@ -7,6 +7,7 @@ from yt_dlp import YoutubeDL
 
 from __init__ import logger
 import logging
+from bot import Update
 from downloader import YTDLPDownloader
 from typing import Dict
 
@@ -64,6 +65,27 @@ class TestDownloader(unittest.TestCase):
         self.assertEqual(result[_fname]['performer'], target_performer) # type: ignore
 
 
+class TestUpdate(unittest.TestCase):
+    def test_map_message(self):
+        input_text = '/do_thing https://example.com/'
+        input_entities = [
+            {
+                'offset': 0,
+                'length': 10,
+                'type': 'bot_command'
+            },
+            {
+                'offset': 0,
+                'length': 43,
+                'type': 'url'
+            }
+        ]
+        expect = {
+            'bot_command': ['/do_thing '],
+            'url': ['/do_thing https://example.com/']
+        }
+        result = Update.map_message(input_text, input_entities)
+        self.assertEqual(expect, result)
 
 
 if __name__ == "__main__":
