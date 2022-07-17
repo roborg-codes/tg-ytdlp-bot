@@ -126,21 +126,21 @@ resource "google_compute_instance" "main-node" {
 
 resource "google_container_cluster" "production-cluster" {
   name                     = "tg-ytdlp-bot-cluster"
-  location                 = "europe-west1"
+  location                 = var.production_cluster_location
   network                  = google_compute_network.vpc_network.name
   remove_default_node_pool = true
   initial_node_count       = 1
 
   addons_config {
     horizontal_pod_autoscaling {
-      disabled = true
+      disabled = false
     }
   }
 }
 
 resource "google_container_node_pool" "production-pool" {
   name       = "main-pool"
-  location   = "europe-west1"
+  location   = var.production_cluster_location
   cluster    = google_container_cluster.production-cluster.name
   node_count = 1
 

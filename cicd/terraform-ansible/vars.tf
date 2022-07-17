@@ -74,7 +74,14 @@ variable "path_main_node_ssh_pubkey" {
 }
 
 variable "keystore_password" {
-    type = string
-    description = "Password used to access jenkins keystore. Pass via envvars. (i.e. TF_VAR_keystore_password=<password>)"
-    sensitive = true
+  type        = string
+  description = "Password used to access jenkins keystore. Pass via envvars. (i.e. TF_VAR_keystore_password=<password>)"
+  sensitive   = true
+}
+
+variable "production_cluster_location" {
+  type        = string
+  default     = "europe-west1-d"
+  description = "Region or zone to create production cluster in."
+  nullable    = false
 }
