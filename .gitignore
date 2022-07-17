@@ -9,3 +9,6 @@ cicd/*/hosts.txt
 cicd/*/main-node.ssh.key
 cicd/*/main-node.ssh.key.pub
 cicd/*/password_jenkins-tf.rrops.pp.ua/
+cicd/*/jenkins-git-keys
+cicd/*/jenkins-git-keys.pub
+cicd/*/jenkins_init_pass.txt
