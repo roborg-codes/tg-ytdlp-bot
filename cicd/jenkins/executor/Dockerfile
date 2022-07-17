@@ -27,6 +27,6 @@ RUN apt update --fix-missing \
     && usermod -aG docker jenkins
 
 USER ${user}
-RUN pip install pylint
+RUN pip install pylint # pipreqs pip-tools
 
 CMD ["bash"]

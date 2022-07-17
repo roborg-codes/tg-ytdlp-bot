@@ -1,13 +1,13 @@
 variable "project_name" {
   type        = string
-  default     = "cicd_tg_ytdlp_bot"
+  default     = "cicd-tg-ytdlp-bot"
   description = "Project name."
   nullable    = false
 }
 
 variable "project_vpc" {
   type        = string
-  default     = "main_network"
+  default     = "main-network"
   description = "Project's default VPC network."
   nullable    = false
 }
@@ -28,7 +28,7 @@ variable "main_node_type" {
 
 variable "main_node_image" {
   type        = string
-  default     = "debian_cloud/debian_11"
+  default     = "debian-cloud/debian-11"
   description = "Family and image name of the host OS."
   nullable    = false
 }
@@ -61,7 +61,7 @@ variable "main_node_ssh_username" {
 
 variable "path_main_node_ssh_key" {
   type        = string
-  default     = "./main-node.ssh.key.pub"
+  default     = "./main-node.ssh.key"
   description = "Ssh key used to log in to the main node."
   nullable    = false
 }

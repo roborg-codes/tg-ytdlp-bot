@@ -10,8 +10,21 @@ resource "google_compute_network" "vpc_network" {
   name = var.project_vpc
 }
 
-resource "google_compute_firewall" "vpc_firewall" {
-  name          = "main-node-firewall-rules"
+resource "google_compute_firewall" "vpc_firewall_ssh" {
+  name          = "main-network-ssh"
+  network       = google_compute_network.vpc_network.name
+  description   = "Firewall rules that apply to the main node."
+  target_tags   = ["jenkins"]
+  source_ranges = ["0.0.0.0/0"]
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+}
+
+resource "google_compute_firewall" "vpc_firewall_icmp" {
+  name          = "main-network-icmp"
   network       = google_compute_network.vpc_network.name
   description   = "Firewall rules that apply to the main node."
   target_tags   = ["jenkins"]
@@ -20,14 +33,28 @@ resource "google_compute_firewall" "vpc_firewall" {
   allow {
     protocol = "icmp"
   }
-  allow {
-    protocol = "tcp"
-    ports    = ["22"] // ssh
-  }
+}
+
+resource "google_compute_firewall" "vpc_firewall_http" {
+  name          = "main-network-http"
+  network       = google_compute_network.vpc_network.name
+  description   = "Firewall rules that apply to the main node."
+  target_tags   = ["jenkins"]
+  source_ranges = ["0.0.0.0/0"]
+
   allow {
     protocol = "tcp"
     ports    = ["80", "443"] // http-01 challenge
   }
+}
+
+resource "google_compute_firewall" "vpc_firewall_jenkins" {
+  name          = "main-network-jenkins"
+  network       = google_compute_network.vpc_network.name
+  description   = "Firewall rules that apply to the main node."
+  target_tags   = ["jenkins"]
+  source_ranges = ["0.0.0.0/0"]
+
   allow {
     protocol = "tcp"
     ports    = ["8443"] // jenkins
@@ -49,7 +76,7 @@ resource "google_compute_instance" "main-node" {
   }
 
   metadata = {
-    ssh-keys = "${var.main_node_ssh_username}:${file(var.path_main_node_ssh_key)}"
+    ssh-keys = "${var.main_node_ssh_username}:${file(var.path_main_node_ssh_pubkey)}"
 }
 
   network_interface {
@@ -68,7 +95,7 @@ resource "google_compute_instance" "main-node" {
       user        = "ansible"
       host        = var.main_node_IP
       port        = 22
-      private_key = file(var.path_main_node_ssh_pubkey)
+      private_key = file(var.path_main_node_ssh_key)
     }
   }
 
@@ -90,7 +117,8 @@ resource "google_compute_instance" "main-node" {
             ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_CONFIG=./ansible.cfg ansible-playbook -i /tmp/hosts.txt ./jenkins-setup.yaml
             rm -fv /tmp/hosts.txt
 
-            mv password_jenkins-tf.rrops.pp.ua/instance1/var/lib/jenkins/secrets/initialAdminPassword ./jenkins_init_pass.txt
+            mv ./password_jenkins-tf.rrops.pp.ua/instance1/var/lib/jenkins/secrets/initialAdminPassword ./jenkins_init_pass.txt
+            rm -rfv ./password_jenkins-tf.rrops.pp.ua/
             printf "Use this to log into https://jenkins-tf.rrops.pp.ua:8443\n> %s\n" $(cat ./jenkins_init_pass.txt)
         EOT
   }
