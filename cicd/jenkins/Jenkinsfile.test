@@ -28,6 +28,7 @@ pipeline {
             steps {
                 echo "+++BEGIN TEST+++"
                 sh '''
+                    pip install -r ./requirements.txt --user
                     python3 ./test.py
                 '''
                 echo "+++END OF TEST+++"
