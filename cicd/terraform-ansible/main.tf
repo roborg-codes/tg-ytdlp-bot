@@ -107,11 +107,11 @@ resource "google_compute_instance" "main-node" {
             echo -n "instance1 ansible_host=${var.main_node_IP} "                            >> /tmp/hosts.txt
             echo -n "ansible_user=ansible ansible_ssh_private_key_file=./main-node.ssh.key " >> /tmp/hosts.txt
             echo -n "docker_listen_address=tcp://127.0.0.1:4243 "                            >> /tmp/hosts.txt
-            echo -n "jenkins_domain=jenkins-tf.rrops.pp.ua"                                  >> /tmp/hosts.txt
-            echo -n "jenkins_pkcs12=keys.pkcs12"                                             >> /tmp/hosts.txt
-            echo -n "jenkins_jks=/var/lib/jenkins/keys.jks"                                  >> /tmp/hosts.txt
-            echo -n "jenkins_https_port=8443"                                                >> /tmp/hosts.txt
-            echo -n "jenkins_keystore_password=${var.keystore_password}"                     >> /tmp/hosts.txt
+            echo -n "jenkins_domain=jenkins-tf.rrops.pp.ua "                                 >> /tmp/hosts.txt
+            echo -n "jenkins_pkcs12=keys.pkcs12 "                                            >> /tmp/hosts.txt
+            echo -n "jenkins_jks=/var/lib/jenkins/keys.jks "                                 >> /tmp/hosts.txt
+            echo -n "jenkins_https_port=8443 "                                               >> /tmp/hosts.txt
+            echo -n "jenkins_keystore_password=${var.keystore_password} "                    >> /tmp/hosts.txt
 
             ansible-playbook --version
             ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_CONFIG=./ansible.cfg ansible-playbook -i /tmp/hosts.txt ./jenkins-setup.yaml
