@@ -99,6 +99,7 @@ resource "google_compute_instance" "main-node" {
     }
   }
 
+  // Prepare environment
   provisioner "local-exec" {
     command = <<-EOT
             sed -i /^${var.main_node_IP}/d ~/.ssh/known_hosts
@@ -112,12 +113,17 @@ resource "google_compute_instance" "main-node" {
             echo -n "jenkins_jks=/var/lib/jenkins/keys.jks "                                 >> /tmp/hosts.txt
             echo -n "jenkins_https_port=8443 "                                               >> /tmp/hosts.txt
             echo -n "jenkins_keystore_password=${var.keystore_password} "                    >> /tmp/hosts.txt
+        EOT
+  }
 
+  // Execute provisioning
+  provisioner "local-exec" {
+    command = <<-EOT
             ansible-playbook --version
             ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_CONFIG=./ansible.cfg ansible-playbook -i /tmp/hosts.txt ./jenkins-setup.yaml
             rm -fv /tmp/hosts.txt
 
-            mv ./password_jenkins-tf.rrops.pp.ua/instance1/var/lib/jenkins/secrets/initialAdminPassword ./jenkins_init_pass.txt
+            mv -f ./password_jenkins-tf.rrops.pp.ua/instance1/var/lib/jenkins/secrets/initialAdminPassword ./jenkins_init_pass.txt
             rm -rfv ./password_jenkins-tf.rrops.pp.ua/
             printf "Use this to log into https://jenkins-tf.rrops.pp.ua:8443\n> %s\n" $(cat ./jenkins_init_pass.txt)
         EOT
